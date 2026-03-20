@@ -38,7 +38,7 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 dir('frontend') {
-                    sh 'npm run build'
+                    sh 'VITE_API_BASE_URL=http://57.158.99.228/api npm run build'
                 }
             }
         }
