@@ -1,0 +1,78 @@
+---
+- name: Deploy Task Management App
+  hosts: azure_vm
+  become: yes
+
+  vars:
+    app_dir: /home/azureuser/task-management-system
+    mongo_uri: "{{ mongo_uri }}"
+
+  tasks:
+
+    - name: Create app directory
+      file:
+        path: "{{ app_dir }}/backend"
+        state: directory
+        owner: azureuser
+        recurse: yes
+
+    - name: Copy backend files
+      synchronize:
+        src: "{{ playbook_dir }}/../backend/"
+        dest: "{{ app_dir }}/backend/"
+        delete: yes
+        rsync_opts:
+          - "--exclude=node_modules"
+          - "--exclude=.env"
+
+    - name: Copy frontend build to Nginx
+      synchronize:
+        src: "{{ playbook_dir }}/../frontend/dist/"
+        dest: /var/www/html/
+        delete: yes
+
+    - name: Write backend .env file
+      copy:
+        dest: "{{ app_dir }}/backend/.env"
+        content: |
+          MONGO_URI={{ mongo_uri }}
+          PORT=5000
+        owner: azureuser
+
+    - name: Install backend dependencies
+      npm:
+        path: "{{ app_dir }}/backend"
+
+    - name: Start backend with PM2
+      shell: |
+        cd {{ app_dir }}/backend
+        pm2 describe task-api > /dev/null 2>&1 \
+          && pm2 restart task-api \
+          || pm2 start server.js --name task-api
+      become_user: azureuser
+
+    - name: Configure Nginx
+      copy:
+        dest: /etc/nginx/sites-available/default
+        content: |
+          server {
+              listen 80;
+              server_name _;
+
+              location / {
+                  root /var/www/html;
+                  index index.html;
+                  try_files $uri /index.html;
+              }
+
+              location /api/ {
+                  proxy_pass http://localhost:5000/;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+              }
+          }
+
+    - name: Reload Nginx
+      service:
+        name: nginx
+        state: reloaded
