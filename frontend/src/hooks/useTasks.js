@@ -42,7 +42,7 @@ export const useTasks = () => {
       return tasks.filter((t) => t.status !== 'Completed');
     }
     return tasks;
-  }, [tasks]);
+  }, [tasks, filters.status]);
 
   return {
     tasks: visibleTasks,
