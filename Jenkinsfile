@@ -5,10 +5,6 @@ pipeline {
         nodejs 'NodeJS-18'
     }
 
-    environment {
-        MONGO_URI = credentials('mongo-uri')
-    }
-
     stages {
 
         stage('Checkout') {
@@ -48,7 +44,7 @@ pipeline {
                 sh '''
                     ansible-playbook -i ansible/inventory.ini \
                     ansible/playbook.yml \
-                    --extra-vars "mongo_uri=${MONGO_URI}"
+                    --extra-vars "mongo_uri=mongodb+srv://taskadmin:devops2026@devops.87qoc2f.mongodb.net/taskdb?retryWrites=true&w=majority&appName=devops"
                 '''
             }
         }
