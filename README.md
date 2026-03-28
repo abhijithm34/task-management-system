@@ -55,7 +55,7 @@ TaskFlow is a full-stack task management system built with the MERN stack. It pr
    VITE_API_BASE_URL=http://localhost:5000/api
    ```
 
-### Core features
+#### Core features
 
 - User registration and login with JWT
 - Protected task routes (users can only access their own tasks)
